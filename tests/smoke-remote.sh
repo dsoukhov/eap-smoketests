@@ -7,8 +7,14 @@
 
 username="smoketest"
 password="qwer#1234"
-jboss_as_dir="/usr/share/jbossas/"
 jar_file="original-smokes-1.0-SNAPSHOT.jar"
+
+if [ $1 == 7 ]
+  then
+    jboss_as_dir="/opt/rh/eap7/root/usr/share/wildfly/"
+  else
+    jboss_as_dir="/usr/share/jbossas/"
+fi
 
 function main() {
     get_packages
