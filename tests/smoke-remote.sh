@@ -12,19 +12,27 @@ jar_file="original-smokes-1.0-SNAPSHOT.jar"
 if [ $1 == 7 ]
   then
     jboss_as_dir="/opt/rh/eap7/root/usr/share/wildfly/"
+    log_dir="/opt/rh/eap7/root/usr/share/wildfly/standalone/log /opt/rh/eap7/root/usr/share/wildfly/domain/log"
   else
     jboss_as_dir="/usr/share/jbossas/"
+    log_dir="/usr/share/jbossas/standalone/log" "/usr/share/jbossas/domain/log"
 fi
 
 function main() {
-    get_packages
-    set_X11_auth
-    add_jbossas_user
-    get_deployment_app
-    test_jbossas
-    test_jbossas_domain
-    print_logs
-    kill_firefox
+   remove_old_logs
+   get_packages
+   set_X11_auth
+   add_jbossas_user
+   get_deployment_app
+   test_jbossas
+   test_jbossas_domain
+   print_logs
+}
+
+function remove_old_logs() {
+    for dir in $log_dir; do
+      rm -rf $dir/*
+    done
 }
 
 function get_packages() {
@@ -57,16 +65,14 @@ function test_jbossas_domain() {
     service jbossas-domain stop
 }
 function print_logs() {
-    echo '!!!ERRORS!!!'
-    cd "/var/log/jbossas"
-    echo "Hey, nice job if you're reading this then there aren't any errors!"
-    echo "However if there's stuff after this message then there ARE errors"
-    echo "in which case I revoke the nice job."
-    grep -RHEin "ERROR|FATAL|EXCEPT" . | grep -v "DEBUG"
-}
+    logs=`grep -RHEin "ERROR|FATAL|EXCEPT" $log_dir | grep -v "DEBUG"`
 
-function kill_firefox(){
-    killall firefox
+    if [ -z "$logs" ]
+      then
+        echo "No errors found!"
+      else
+        echo "!!!!ERRORS!!!!"
+        echo $logs
+    fi
 }
-
 main

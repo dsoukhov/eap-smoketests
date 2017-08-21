@@ -36,5 +36,7 @@ def get_ip(name):
         if log_msg in line:
             return line.split(" ")[-1]
 
+    raise ValueError('Unable to find ip')
+
 if __name__ == "__main__":
     start()
