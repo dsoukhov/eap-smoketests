@@ -4,7 +4,10 @@ username="smoketest"
 password="qwer#1234"
 jar_file="original-smokes-1.0-SNAPSHOT.jar"
 
-if [ $1 == 7 ]
+EAP_VER=$1
+RHEL_VER=$2
+
+if [ $EAP_VER == 7 ]
   then
     jboss_as_dir="/opt/rh/eap7/root/usr/share/wildfly/"
     log_dir="/opt/rh/eap7/root/usr/share/wildfly/standalone/log /opt/rh/eap7/root/usr/share/wildfly/domain/log"
@@ -14,14 +17,15 @@ if [ $1 == 7 ]
 fi
 
 function main() {
-   remove_old_logs
-   get_packages
-   set_X11_auth
-   add_jbossas_user
-   get_deployment_app
-   test_jbossas
-   test_jbossas_domain
-   print_logs
+    remove_old_logs
+    get_packages
+    set_X11_auth
+    add_jbossas_user
+    get_deployment_app
+    test_jbossas
+    test_jbossas_domain
+    print_logs
+    cleanup
 }
 
 function remove_old_logs() {
@@ -34,6 +38,13 @@ function remove_old_logs() {
 function get_packages() {
     yum -y groupinstall "X Window System" Desktop
     yum -y install firefox
+
+    # workaround to fix https://bugzilla.mozilla.org/show_bug.cgi?id=1376559
+    if [ $RHEL_VER == 7 ]
+      then
+        cd ~/.mozilla/firefox/*.default
+        echo "user_pref(\"browser.tabs.remote.autostart.2\", false);" >> prefs.js
+    fi
 }
 
 function set_X11_auth(){
@@ -56,10 +67,12 @@ function test_jbossas() {
     service jbossas start && firefox http://localhost:9990 ; firefox http://localhost:8080/mass-bugzilla-modifier
     service jbossas stop
 }
+
 function test_jbossas_domain() {
     service jbossas-domain start && firefox http://localhost:9990
     service jbossas-domain stop
 }
+
 function print_logs() {
     logs=`grep -RHEin "ERROR|FATAL|EXCEPT" $log_dir | grep -v "DEBUG"`
 
@@ -71,4 +84,10 @@ function print_logs() {
         echo $logs
     fi
 }
+
+function cleanup() {
+    killall firefox
+    killall dbus-launch
+}
+
 main
