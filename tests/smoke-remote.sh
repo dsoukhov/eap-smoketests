@@ -1,9 +1,4 @@
 #!/bin/bash
-#Emmett Underhill July 7 2015
-#This is the script that gets run on the vm
-#during a smoke testing session. I won't comment
-#on what it does exactly because that is outlined
-#clearly in the main function
 
 username="smoketest"
 password="qwer#1234"
@@ -15,7 +10,7 @@ if [ $1 == 7 ]
     log_dir="/opt/rh/eap7/root/usr/share/wildfly/standalone/log /opt/rh/eap7/root/usr/share/wildfly/domain/log"
   else
     jboss_as_dir="/usr/share/jbossas/"
-    log_dir="/usr/share/jbossas/standalone/log" "/usr/share/jbossas/domain/log"
+    log_dir="/usr/share/jbossas/standalone/log /usr/share/jbossas/domain/log"
 fi
 
 function main() {
@@ -30,6 +25,7 @@ function main() {
 }
 
 function remove_old_logs() {
+    service jbossas stop
     for dir in $log_dir; do
       rm -rf $dir/*
     done

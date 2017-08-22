@@ -29,7 +29,7 @@ def get_ip(name):
 
     session = dryscrape.Session()
     session.visit(url)
-    time.sleep(2)
+    session.wait_for_safe(lambda: session.at_xpath('.//*[@id="out"]'))
     text = session.body()
 
     for line in text.splitlines():
