@@ -8,12 +8,16 @@ EAP_VER=$1
 RHEL_VER=$2
 
 if [ $EAP_VER == 7 ]
-  then
-    jboss_as_dir="/opt/rh/eap7/root/usr/share/wildfly/"
-    log_dir="/opt/rh/eap7/root/usr/share/wildfly/standalone/log /opt/rh/eap7/root/usr/share/wildfly/domain/log"
-  else
-    jboss_as_dir="/usr/share/jbossas/"
-    log_dir="/usr/share/jbossas/standalone/log /usr/share/jbossas/domain/log"
+then
+  jboss_as_dir="/opt/rh/eap7/root/usr/share/wildfly/"
+  log_dir="/opt/rh/eap7/root/usr/share/wildfly/standalone/log /opt/rh/eap7/root/usr/share/wildfly/domain/log"
+  eap_standalone="eap7-standalone"
+  eap_domain="eap7-domain"
+else
+  jboss_as_dir="/usr/share/jbossas/"
+  log_dir="/usr/share/jbossas/standalone/log /usr/share/jbossas/domain/log"
+  eap_standalone="jbossas"
+  eap_domain="jbossas-domain"
 fi
 
 function main() {
@@ -29,7 +33,8 @@ function main() {
 }
 
 function remove_old_logs() {
-    service jbossas stop
+    service $eap_domain stop
+    service $eap_standalone stop
     for dir in $log_dir; do
       rm -rf $dir/*
     done
@@ -41,9 +46,9 @@ function get_packages() {
 
     # workaround to fix https://bugzilla.mozilla.org/show_bug.cgi?id=1376559
     if [ $RHEL_VER == 7 ]
-      then
-        cd ~/.mozilla/firefox/*.default
-        echo "user_pref(\"browser.tabs.remote.autostart.2\", false);" >> prefs.js
+    then
+      cd ~/.mozilla/firefox/*.default
+      echo "user_pref(\"browser.tabs.remote.autostart.2\", false);" >> prefs.js
     fi
 }
 
@@ -64,24 +69,24 @@ function setup_hosts_file() {
 }
 
 function test_jbossas() {
-    service jbossas start && firefox http://localhost:9990 ; firefox http://localhost:8080/mass-bugzilla-modifier
-    service jbossas stop
+    service $eap_standalone start && firefox http://localhost:9990 ; firefox http://localhost:8080/mass-bugzilla-modifier
+    service $eap_standalone stop
 }
 
 function test_jbossas_domain() {
-    service jbossas-domain start && firefox http://localhost:9990
-    service jbossas-domain stop
+    service $eap_domain start && firefox http://localhost:9990
+    service $eap_domain stop
 }
 
 function print_logs() {
     logs=`grep -RHEin "ERROR|FATAL|EXCEPT" $log_dir | grep -v "DEBUG"`
 
     if [ -z "$logs" ]
-      then
-        echo "No errors found!"
-      else
-        echo "!!!!ERRORS!!!!"
-        echo $logs
+    then
+      echo "No errors found!"
+    else
+      echo "!!!!ERRORS!!!!"
+      echo $logs
     fi
 }
 
